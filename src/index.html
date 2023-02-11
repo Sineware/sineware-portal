@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Sineware Cloud Portal</title>
+    <style>
+      /* https://codesandbox.io/s/green-blinking-dot-p3cjn?from-embed=&file=/style.css:242-483 */
+      .status-ok {
+        animation: blinker 2s linear infinite;
+        width: 10px;
+        height: 10px;
+        display: inline-block;
+        border: 1px solid green;
+        background-color: green;
+        border-radius: 100%;
+      }
+      @keyframes blinker {
+        50% {
+          opacity: 0.6;
+        }
+      }
+      .dev-warning {
+        color: white;
+        background-color: red;
+        padding: 10px;
+        font-size: 12px;
+        position: fixed;
+        bottom: 10;
+        left: 10;
+      }
+
+    </style>
+    <link rel="stylesheet" href="../node_modules/xterm/css/xterm.css" />
+    <script src="../node_modules/xterm/lib/xterm.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.1/css/all.min.css" integrity="sha512-MV7K8+y+gLIBoVD59lQIYicR65iaqukzvf/nwasF0nqhPay5w/9lJmVM2hMDcnK1OnMGCdVK+iQrJ7lzPJQd1w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  </head>
+  <body>
+    <div class="dev-warning">
+      <b>WARNING - Sineware Cloud Services is currently under development and is not suitable for production use.</b>
+      <br />
+      <div style="color: black">Copyright © 2022 Seshan Ravikumar</div>
+    </div>
+    <main class="container" id="app"></div>
+    <script type="module" src="index.js"></script>
+  </body>
+</html>
