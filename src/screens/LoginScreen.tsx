@@ -24,10 +24,19 @@ export function LoginScreen() {
         async function connectToWS() {
             if(localStorage.getItem("token")) {
                 context.setToken(localStorage.getItem("token")!);
-                let user: APIUser = await connect(localStorage.getItem("token")!, context.setError);
-                context.setUser(user);
-                context.setIsLoggedIn(true);
-                console.log("Connected!");
+                try {
+                    let user: APIUser = await connect(localStorage.getItem("token")!, context.setError);
+                    context.setUser(user);
+                    context.setIsLoggedIn(true);
+                    console.log("Connected!");
+                    return null;
+                } catch(e) {
+                    console.log(e);
+                    localStorage.clear();
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2500)
+                }
                 return null;
             } else {
                 setIsLoading(false);
