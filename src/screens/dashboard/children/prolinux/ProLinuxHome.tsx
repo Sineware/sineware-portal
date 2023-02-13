@@ -93,13 +93,13 @@ export function ProLinuxHome() {
         { name: 'msg', displayName: "Log", inputFilterable: true, exactFilterable: true }
     ];
 
-
     return (
         <div>
             <a onClick={() => navigate("/dashboard/" + uuid)}>{"<"} Back</a>
             <hr />
             <p>
                 <b>Device</b> <b>({deviceUUID})</b>
+                {typeof deviceInfo === "undefined" ? <div style={{color: 'red'}}>OFFLINE</div> : null}
                 <div>Hostname: {deviceInfo?.name}</div>
                 <div>Type: {deviceInfo?.type}</div>
             </p>
