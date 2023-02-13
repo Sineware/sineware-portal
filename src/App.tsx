@@ -66,7 +66,9 @@ const router = createBrowserRouter([
             }
         ]
     }
-  ]);
+  ], {
+    basename: '/cloud'
+  });
 
 export function App() {
     const [isErrorModalOpen, setIsErrorModalOpen] = React.useState(false);
