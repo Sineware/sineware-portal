@@ -69,10 +69,19 @@ export function DashboardScreen() {
                     <li><strong>Sineware Cloud Portal</strong></li>
                 </ul>
                 <ul>
-                    <li><a href="#" className="contrast">Overview</a></li>
-                    <li><a href="#">Settings</a></li>
-                    <li><a href="#">About</a></li>
-                    <li><a href="#">Logout</a></li>
+                    <li><a href="#" className="contrast" onClick={() => {
+                        navigate("/dashboard");
+                    }}>Overview</a></li>
+                    <li><a href="#" onClick={() => {
+                        alert("Not implemented yet!")
+                    }}>Settings</a></li>
+                    <li><a href="#" onClick={() => {
+                        alert("Not implemented yet!")
+                    }}>About</a></li>
+                    <li><a href="#" onClick={() => {
+                        localStorage.clear();
+                        location.reload();
+                    }}>Logout</a></li>
                 </ul>
             </nav>
             <div style={{display: "flex", flexDirection: "row", width: "100%"}}>

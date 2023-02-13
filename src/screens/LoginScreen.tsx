@@ -108,6 +108,7 @@ export function LoginScreen() {
                                     </button>
                                 </div>
                             </div>
+                            <a href="https://id.sineware.ca/realms/sineware/protocol/openid-connect/registrations?client_id=ocs2&response_type=code&scope=openid%20email&redirect_uri=https://sineware.ca/cloud/">Register</a>
                             
                         </Form>
                     )}

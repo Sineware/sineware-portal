@@ -61,5 +61,6 @@ export function callWS(action: string, payload: any, promise: boolean = true): P
           ws.addEventListener("message", listener);
         }
         ws.send(JSON.stringify(msg));
+        if(!promise) resolve({});
     });
 }
