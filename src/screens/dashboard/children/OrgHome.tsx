@@ -45,7 +45,7 @@ export function DashboardOrgHome() {
                     </tr>
                 </thead>
                 <tbody>
-                    {orgDevices?.data.map((device) => {
+                    {orgDevices?.data.filter(o => o.type !== "user").map((device) => {
                         return (
                             <tr>
                                 <td>{device.name} ({device.uuid})</td>
@@ -58,6 +58,7 @@ export function DashboardOrgHome() {
                     })}
                 </tbody>
             </table>
+            {orgDevices?.data.filter(o => o.type !== "user").length === 0 ? <center>No devices are currently connected.</center> : null}
 
             <strong>Websites</strong>
             <table>
@@ -82,6 +83,7 @@ export function DashboardOrgHome() {
                     })}
                 </tbody>
             </table>
+            {orgWebsites?.data.length === 0 ? <center>No websites have been created.</center> : null}
         </div>
     );
 }

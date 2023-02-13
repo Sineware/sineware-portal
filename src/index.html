@@ -29,6 +29,19 @@
         left: 10;
       }
 
+      details {
+        background-color: aliceblue;
+        border-radius: 10px;
+        padding: 10px;
+        padding-top: 20px;
+        transition: all 0.2s ease-in-out;
+      }
+      /* details on hover*/
+      details:hover {
+        background-color: #f1f1f1;
+        transition: all 0.2s ease-in-out;
+      }
+      
     </style>
     <link rel="stylesheet" href="../node_modules/xterm/css/xterm.css" />
     <script src="../node_modules/xterm/lib/xterm.js"></script>
@@ -38,7 +51,7 @@
     <div class="dev-warning">
       <b>WARNING - Sineware Cloud Services is currently under development and is not suitable for production use.</b>
       <br />
-      <div style="color: black">Copyright © 2022 Seshan Ravikumar</div>
+      <div style="color: black">Copyright © 2023 Seshan Ravikumar</div>
     </div>
     <main class="container" id="app"></div>
     <script type="module" src="index.js"></script>

@@ -13,6 +13,9 @@ export function LoginScreen() {
         if(context.isLoggedIn) {
             console.log("lastRoute: ", window.lastRoute);
             if(window.lastRoute) {
+                if(window.lastRoute.startsWith("/cloud")) {
+                    window.lastRoute = window.lastRoute.substring(6);
+                }
                 navigate(window.lastRoute);
             } else {
                 navigate("/dashboard");

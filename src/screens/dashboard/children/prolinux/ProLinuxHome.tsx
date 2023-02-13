@@ -1,5 +1,5 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import FilterableTable from "react-filterable-table";
 import { useWS, useWSListener } from "../../../../api/Hooks";
 import { AppContext } from "../../../../state/AppContext";
@@ -41,7 +41,10 @@ function XTerm(props: {
     const term = useRef(null);
     useEffect(() => {
         //@ts-ignore
-        term.current = new Terminal();
+        term.current = new Terminal({
+            cols: 80,
+            rows: 30,
+        });
         term.current.open(el.current);
         term.current.write('$ ')
         term.current.onData(data => {
@@ -67,6 +70,7 @@ function XTerm(props: {
 
 export function ProLinuxHome() {
     const { orgUUID: uuid, deviceUUID } = useParams();
+    const navigate = useNavigate();
     const context = useContext(AppContext);
     const [logs, setLogs]: any = useState([])
 
@@ -78,38 +82,51 @@ export function ProLinuxHome() {
     }, [setLogs]);
     useWSListener("device-log", log);
 
+    const [orgDevices, setOrgDevicesPayload] = useWS<any>("get-org-devices", { uuid: uuid });
+    const deviceInfo = orgDevices?.data?.find((device: any) => device.uuid === deviceUUID);
+    console.log("deviceInfo: ", deviceInfo)
+
 
     const fields = [
         { name: 'from', displayName: "From", inputFilterable: true },
         { name: 'type', displayName: "Type", inputFilterable: true, exactFilterable: true },
         { name: 'msg', displayName: "Log", inputFilterable: true, exactFilterable: true }
     ];
-    
+
 
     return (
         <div>
+            <a onClick={() => navigate("/dashboard/" + uuid)}>{"<"} Back</a>
+            <hr />
             <p>
                 <b>Device</b> <b>({deviceUUID})</b>
+                <div>Hostname: {deviceInfo?.name}</div>
+                <div>Type: {deviceInfo?.type}</div>
             </p>
-            <hr />
-            <XTerm onInput={(text) => {
-                callWS("device-stream-terminal", {
-                    deviceUUID: deviceUUID,
-                    fromDevice: false,
-                    text
-                }, false)
-                //console.log("input: ", text)
-            }} deviceUUID={deviceUUID} />
-            <hr />
-            <b>Logs</b>
-            <FilterableTable
-                namespace="Logs"
-                data={logs}
-                fields={fields}
-                noRecordsMessage="There are no logs to display"
-                noFilteredRecordsMessage="No logs match your filters!"
-            />
-
+            <details>
+                <summary>Device Terminal</summary>
+                <XTerm onInput={(text) => {
+                    callWS("device-stream-terminal", {
+                        deviceUUID: deviceUUID,
+                        fromDevice: false,
+                        text
+                    }, false)
+                }} deviceUUID={deviceUUID} />
+            </details>
+            <details>
+                <summary>Logs</summary>
+                <FilterableTable
+                    namespace="Logs"
+                    data={logs}
+                    fields={fields}
+                    noRecordsMessage="There are no logs to display"
+                    noFilteredRecordsMessage="No logs match your filters!"
+                />
+            </details>
+            <details>
+                <summary>Crash / Coredumps</summary>
+                <p>Coming Soon!</p>
+            </details>
         </div>
     );
 }
