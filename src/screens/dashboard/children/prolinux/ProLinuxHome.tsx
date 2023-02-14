@@ -86,6 +86,24 @@ export function ProLinuxHome() {
     const deviceInfo = orgDevices?.data?.find((device: any) => device.uuid === deviceUUID);
     console.log("deviceInfo: ", deviceInfo)
 
+    const [sysInfo, setSysInfo] = useState("");
+    useEffect(() => {
+        let call = async () => {
+            setSysInfo((await callWS("device-exec", {
+                deviceUUID: deviceUUID,
+                fromDevice: false,
+                fromUUID: context.user.uuid,
+                command: "top -bn1 | head -n2",
+            })).data);
+        };
+        call();
+        let i = setInterval(() => {
+            call();
+        }, 2000);
+        return () => {
+            clearInterval(i);
+        }
+    }, []);
 
     const fields = [
         { name: 'from', displayName: "From", inputFilterable: true },
@@ -102,7 +120,40 @@ export function ProLinuxHome() {
                 {typeof deviceInfo === "undefined" ? <div style={{color: 'red'}}>OFFLINE</div> : null}
                 <div>Hostname: {deviceInfo?.name}</div>
                 <div>Type: {deviceInfo?.type}</div>
+                <div>
+                    <pre>
+                        {sysInfo}
+                    </pre>
+                </div>
             </p>
+            <details>
+                <summary>Actions</summary>
+                <div className="grid">
+                    <button className="secondary" onClick={async () => {
+                        let res = (await callWS("device-exec", {
+                            deviceUUID: deviceUUID,
+                            fromDevice: false,
+                            fromUUID: context.user.uuid,
+                            command: "rc-service tinydm restart",
+                        })).data
+                        alert(res)
+                    }}>
+                        Restart Plasma Mobile
+                    </button>
+                    <button className="secondary" onClick={() => {
+                        callWS("device-exec", {
+                            deviceUUID: deviceUUID,
+                            fromDevice: false,
+                            fromUUID: context.user.uuid,
+                            command: "reboot",
+                        }, false)
+                        alert("Ok")
+                    }}>
+                        Restart Device
+                    </button>
+                    <div></div>
+                </div>
+            </details>
             <details>
                 <summary>Device Terminal</summary>
                 <XTerm onInput={(text) => {
