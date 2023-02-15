@@ -20,7 +20,7 @@ interface ModalProps {
     disableClose?: boolean;
     onClose: () => void;
 }
-const Modal = (props: ModalProps) => {
+export const Modal = (props: ModalProps) => {
     return (
         <dialog open={props.isOpen}>
             <article>

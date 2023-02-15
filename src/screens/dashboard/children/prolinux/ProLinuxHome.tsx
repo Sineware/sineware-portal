@@ -4,6 +4,7 @@ import FilterableTable from "react-filterable-table";
 import { useWS, useWSListener } from "../../../../api/Hooks";
 import { AppContext } from "../../../../state/AppContext";
 import { callWS } from "../../../../api/ws";
+import { Modal } from "../../../../App";
 
 // XTerm.js Wrapper div
 /*class XTerm extends React.Component<{
@@ -84,8 +85,7 @@ export function ProLinuxHome() {
 
     const [orgDevices, setOrgDevicesPayload] = useWS<any>("get-org-devices", { uuid: uuid });
     const deviceInfo = orgDevices?.data?.find((device: any) => device.uuid === deviceUUID);
-    console.log("deviceInfo: ", deviceInfo)
-
+    //console.log("deviceInfo: ", deviceInfo)
     const [sysInfo, setSysInfo] = useState("");
     useEffect(() => {
         let call = async () => {
@@ -104,6 +104,40 @@ export function ProLinuxHome() {
             clearInterval(i);
         }
     }, []);
+
+    const [coreDumps, setCoreDumps] = useState([]);
+    const [coreDumpsSize, setCoreDumpsSize] = useState("");
+    const [coreDumpModalOpen, setCoreDumpModalOpen] = useState(false);
+    const [coreDumpBackTraceContent, setCoreDumpBackTraceContent] = useState("");
+    const [coreDumpCore, setCoreDumpCore] = useState({
+        name: "",
+        pid: "",
+        time: "",
+    });
+    const updateCoreDumpList = useCallback(async () => {
+        setCoreDumps((await callWS("device-exec", {
+            deviceUUID: deviceUUID,
+            fromDevice: false,
+            fromUUID: context.user.uuid,
+            command: "ls /tmp --full-time | grep -v / | tr ' ' ',' | tr '\n' '$'",
+        })).data.split("$").map((c: string) => c.split(",").reverse()).filter((c: string[]) => c[0].startsWith("core.")).map((c: string[]) => ({
+            name: c[0].split(".")[1],
+            pid: c[0].split(".")[2],
+            time: c[2] + " " + c[3],
+        })));
+
+        // find /tmp/ -type f -name 'core.*' -exec du -ch {} + | grep total
+        setCoreDumpsSize((await callWS("device-exec", {
+            deviceUUID: deviceUUID,
+            fromDevice: false,
+            fromUUID: context.user.uuid,
+            command: "find /tmp/ -type f -name 'core.*' -exec du -ch {} + | grep total",
+        })).data);
+    }, []);
+    useEffect(() => {
+        updateCoreDumpList();
+    }, []);
+    //console.log("coreDumps: ", coreDumps);
 
     const fields = [
         { name: 'from', displayName: "From", inputFilterable: true },
@@ -176,8 +210,104 @@ export function ProLinuxHome() {
             </details>
             <details>
                 <summary>Crash / Coredumps</summary>
-                <p>Coming Soon!</p>
+                <div className="grid">
+                    <button className="secondary" onClick={() => {
+                        updateCoreDumpList();
+                    }}>
+                        Refresh
+                    </button>
+                    <button className="secondary" onClick={async () => {
+                        await callWS("device-exec", {
+                            deviceUUID: deviceUUID,
+                            fromDevice: false,
+                            fromUUID: context.user.uuid,
+                            command: "rm /tmp/core.*",
+                        }, false)
+                        updateCoreDumpList();
+                    }}>
+                        Delete All Coredumps
+                    </button>
+                    <button className="secondary" onClick={() => {
+                        if(coreDumpBackTraceContent !== "") {
+                            setCoreDumpModalOpen(true);
+                        } else {
+                            alert("No backtrace currently loaded.");
+                        }
+                    }}>
+                        Reopen Last Backtrace
+                    </button>
+                </div>
+                <div>{coreDumpsSize}</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Process</th>
+                            <th>PID</th>
+                            <th>Time</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {coreDumps.map((core: any) => (
+                            <tr>
+                                <td>{core.name}</td>
+                                <td>{core.pid}</td>
+                                <td>{core.time}</td>
+                                <td>
+                                    <button className="primary" onClick={async () => {
+                                        // gdb /usr/bin/plasmashell core.plasmashell.2954 -ex 'bt' -ex 'set pagination 0' -batch
+                                        // get the binary first using which
+                                        let bin = (await callWS("device-exec", {
+                                            deviceUUID: deviceUUID,
+                                            fromDevice: false,
+                                            fromUUID: context.user.uuid,
+                                            command: `which ${core.name}`,
+                                        })).data.trim();
+                                        console.log(bin);
+                                        console.log(`gdb ${bin} /tmp/core.${core.name}.${core.pid} -ex 'bt' -ex 'set pagination 0' -batch`)
+                                        setCoreDumpBackTraceContent("");
+                                        setCoreDumpCore(core);
+                                        setCoreDumpModalOpen(true);
+                                        let res = (await callWS("device-exec", {
+                                            deviceUUID: deviceUUID,
+                                            fromDevice: false,
+                                            fromUUID: context.user.uuid,
+                                            command: `gdb ${bin} /tmp/core.${core.name}.${core.pid} -ex 'bt' -ex 'set pagination 0' -batch`,
+                                        })).data
+                                        console.log(res);
+                                        setCoreDumpModalOpen(true);
+                                        setCoreDumpBackTraceContent(res);
+                                    }}>
+                                        Load Backtrace
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             </details>
+            <Modal title="Backtrace Viewer" isOpen={coreDumpModalOpen} onClose={() => setCoreDumpModalOpen(false)}>
+                <div style={{minWidth: "50vw"}}></div>
+                {coreDumpBackTraceContent === "" ? <div>
+                    <p><center>Loading the backtrace for <code>core.{coreDumpCore.name}.{coreDumpCore.pid}</code> <br />(this may take a few minutes)</center><br /></p>
+                    <progress></progress>
+                </div> : <div>
+                    <b>core.{coreDumpCore.name}.{coreDumpCore.pid}</b>
+                    <pre style={{height: "50vh"}}>{coreDumpBackTraceContent}</pre>
+                    <button className="primary" onClick={() => {
+                        const element = document.createElement("a");
+                        const file = new Blob([coreDumpBackTraceContent], {type: 'text/plain'});
+                        element.href = URL.createObjectURL(file);
+                        element.download = `core.${coreDumpCore.name}.${coreDumpCore.pid}.txt`;
+                        document.body.appendChild(element);
+                        element.click();
+                        document.body.removeChild(element);
+                    }}>
+                        Save as text file
+                    </button>
+                </div>}
+                
+            </Modal>
         </div>
     );
 }
